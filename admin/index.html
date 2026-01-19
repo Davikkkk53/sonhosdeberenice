@@ -64,10 +64,28 @@ button:hover{
     padding:6px 10px;
     font-size:14px;
 }
+
+/* tela de login */
+#loginBox{
+    max-width:380px;
+    margin:60px auto;
+    background:white;
+    padding:22px;
+    border-radius:8px;
+    box-shadow:0 0 12px rgba(0,0,0,.08);
+}
 </style>
 </head>
 <body>
 
+<div id="loginBox">
+    <h2>Login Admin</h2>
+    <input id="user" placeholder="Usuário">
+    <input id="pass" type="password" placeholder="Senha">
+    <button onclick="entrar()">Entrar</button>
+</div>
+
+<div id="painel" style="display:none">
 <div class="container">
     <h2>Painel Admin – Catálogo</h2>
     <p>Adicione ou altere produtos</p>
@@ -76,10 +94,10 @@ button:hover{
     <form id="formProduto">
         <input name="nome" placeholder="Nome do produto" required>
         <input name="tamanhos" placeholder="Tamanhos (ex: P,M,G)" required>
-        <input name="preco" placeholder="Preço atual (ex: 89.90)" type="number" step="0.01" required>
-        <input name="preco_antigo" placeholder="Preço antigo (opcional)" type="number" step="0.01">
+        <input name="preco" placeholder="Preço atual" type="number" step="0.01" required>
+        <input name="preco_antigo" placeholder="Preço antigo" type="number" step="0.01">
         <input name="desconto" placeholder="Desconto (%)" type="number" step="1">
-        <input name="whatsapp" placeholder="Telefone WhatsApp (ex: 5511999999999)" required>
+        <input name="whatsapp" placeholder="WhatsApp" required>
         <input name="imagem" type="file" accept="image/*" required>
         <select name="status">
             <option value="ativo">Ativo</option>
@@ -91,27 +109,34 @@ button:hover{
     <h3 style="margin-top:30px;">Produtos cadastrados</h3>
     <div id="lista"></div>
 </div>
+</div>
 
 <script>
-const form = document.getElementById('formProduto');
-const lista = document.getElementById('lista');
 
-// ROTAS relativas porque server.js serve client/admin na mesma porta
 const BACKEND_URL = '';
 
-// Carregar produtos do backend
-async function carregarProdutos() {
-    try {
-        const res = await fetch(`${BACKEND_URL}/produtos`);
-        const produtos = await res.json();
-        renderLista(produtos);
-    } catch(err){
-        console.error('Erro ao carregar produtos:', err);
-        lista.innerHTML = '<p>Não foi possível carregar os produtos.</p>';
+function entrar(){
+    const u = document.getElementById('user').value.trim();
+    const p = document.getElementById('pass').value.trim();
+
+    if(u === "admin" && p === "admin123"){
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("painel").style.display = "block";
+        carregarProdutos();
+    } else {
+        alert("Usuário ou senha incorretos");
     }
 }
 
-// Renderizar lista de produtos
+const form = document.getElementById('formProduto');
+const lista = document.getElementById('lista');
+
+async function carregarProdutos() {
+    const res = await fetch(`${BACKEND_URL}/produtos`);
+    const produtos = await res.json();
+    renderLista(produtos);
+}
+
 function renderLista(produtos){
     lista.innerHTML = '';
     produtos.forEach(p => {
@@ -126,68 +151,39 @@ function renderLista(produtos){
             ${p.preco_antigo ? `<div>Antes: R$ ${p.preco_antigo}</div>` : ''}
             ${p.desconto ? `<div>Desconto: ${p.desconto}%</div>` : ''}
             <div>WhatsApp: ${p.whatsapp}</div>
-            <div>Imagem:</div>
-            <img src="${p.imagem}" alt="${p.nome}">
-            <div>
-                <button onclick="alterarStatus('${p._id}', '${p.status === 'ativo' ? 'inativo' : 'ativo'}')">
-                    ${p.status === 'ativo' ? 'Desativar' : 'Ativar'}
-                </button>
-                <button onclick="deletarProduto('${p._id}')">Deletar</button>
-            </div>
+            <img src="${p.imagem}">
+            <button onclick="alterarStatus('${p._id}', '${p.status === 'ativo' ? 'inativo' : 'ativo'}')">
+                ${p.status === 'ativo' ? 'Desativar' : 'Ativar'}
+            </button>
+            <button onclick="deletarProduto('${p._id}')">Deletar</button>
         </div>
         `;
     });
 }
 
-// Enviar novo produto para backend
 form.addEventListener('submit', async (e)=>{
     e.preventDefault();
     const formData = new FormData(form);
-
-    try {
-        const res = await fetch(`${BACKEND_URL}/produtos`, {
-            method: 'POST',
-            body: formData
-        });
-        await res.json();
-        alert('Produto salvo com sucesso!');
-        form.reset();
-        carregarProdutos();
-    } catch(err){
-        console.error(err);
-        alert('Erro ao salvar produto.');
-    }
+    await fetch(`${BACKEND_URL}/produtos`, { method:'POST', body: formData });
+    form.reset();
+    carregarProdutos();
 });
 
-// Alterar status
 async function alterarStatus(id, novoStatus){
-    try{
-        await fetch(`${BACKEND_URL}/produtos/${id}/status`, {
-            method:'PATCH',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({status:novoStatus})
-        });
-        carregarProdutos();
-    }catch(err){
-        alert('Erro ao alterar status');
-        console.error(err);
-    }
+    await fetch(`${BACKEND_URL}/produtos/${id}/status`, {
+        method:'PATCH',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({status:novoStatus})
+    });
+    carregarProdutos();
 }
 
-// Deletar produto
 async function deletarProduto(id){
-    if(!confirm('Deseja realmente deletar este produto?')) return;
-    try{
-        await fetch(`${BACKEND_URL}/produtos/${id}`, {method:'DELETE'});
-        carregarProdutos();
-    }catch(err){
-        alert('Erro ao deletar produto');
-        console.error(err);
-    }
+    if(!confirm('Deseja realmente deletar?')) return;
+    await fetch(`${BACKEND_URL}/produtos/${id}`, {method:'DELETE'});
+    carregarProdutos();
 }
 
-// Inicializa
-carregarProdutos();
 </script>
 
 </body>
