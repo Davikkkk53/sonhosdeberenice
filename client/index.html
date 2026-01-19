@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sonhos de Berenice — Catálogo</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;600&family=Poppins:wght@300;400;500;600&display=swap');
+
+:root{
+    --rosa:#f5bedc;
+    --rosa2:#e88ebd;
+    --rosa3:#ffeef7;
+    --branco:white;
+    --cinza:#6e6e6e;
+    --verde:#24d365;
+    --shadow:0 10px 28px rgba(0,0,0,.08);
+}
+
+body{
+    margin:0;
+    background:var(--rosa3);
+    font-family:Poppins, sans-serif;
+    color:#333;
+}
+
+header{
+    text-align:center;
+    padding:40px 20px 25px;
+}
+header h1{
+    font-family:Quicksand, sans-serif;
+    font-size:38px;
+    font-weight:600;
+    color:var(--rosa2);
+}
+header p{
+    margin-top:6px;
+    font-size:14px;
+    letter-spacing:3px;
+    color:var(--cinza);
+}
+
+.busca{
+    max-width:850px;
+    margin:20px auto 40px;
+    display:flex;
+    gap:10px;
+}
+.busca input{
+    flex:1;
+    padding:14px 18px;
+    border:none;
+    border-radius:40px;
+    box-shadow:var(--shadow);
+    outline:none;
+    font-size:15px;
+}
+.busca button{
+    padding:14px 20px;
+    border:none;
+    border-radius:40px;
+    background:var(--rosa2);
+    color:white;
+    box-shadow:var(--shadow);
+    font-size:16px;
+    cursor:pointer;
+}
+
+.categorias{
+    display:flex;
+    gap:12px;
+    justify-content:center;
+    flex-wrap:wrap;
+    margin-bottom:30px;
+}
+.categorias span{
+    padding:8px 18px;
+    border-radius:30px;
+    background:white;
+    font-size:14px;
+    box-shadow:var(--shadow);
+}
+
+.catalogo{
+    max-width:1150px;
+    margin:0 auto 80px;
+    padding:0 20px;
+    display:grid;
+    gap:32px;
+    grid-template-columns:repeat(auto-fill, minmax(280px,1fr));
+}
+
+.card{
+    position:relative;
+    background:white;
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:var(--shadow);
+    transition:.25s;
+}
+.card:hover{
+    transform:translateY(-6px);
+}
+
+.card .fav{
+    position:absolute;
+    top:12px;
+    right:12px;
+    font-size:22px;
+    color:white;
+    background:rgba(0,0,0,.25);
+    width:36px;
+    height:36px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+}
+
+.card img{
+    width:100%;
+    height:260px;
+    object-fit:cover;
+    border-bottom:1px solid #eee;
+}
+
+.info{
+    padding:16px 18px 18px;
+}
+.info h3{
+    font-family:Quicksand, sans-serif;
+    font-size:20px;
+    color:var(--rosa2);
+    font-weight:600;
+    margin-bottom:4px;
+}
+.info .tamanho{
+    font-size:14px;
+    color:var(--cinza);
+    margin-bottom:8px;
+}
+.preco{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:17px;
+    font-weight:600;
+}
+.preco del{
+    font-weight:400;
+    color:#9a9a9a;
+}
+.desconto{
+    background:var(--rosa2);
+    color:white;
+    font-size:13px;
+    padding:2px 8px;
+    border-radius:20px;
+}
+
+.status{
+    margin:10px 0 14px;
+    font-size:14px;
+    color:var(--verde);
+}
+
+.btn{
+    display:block;
+    margin-top:14px;
+    text-decoration:none;
+    text-align:center;
+    background:var(--verde);
+    color:white;
+    padding:12px 18px;
+    border-radius:50px;
+    font-size:15px;
+    font-weight:500;
+    transition:.25s;
+}
+.btn:hover{
+    filter:brightness(.9);
+}
+
+.inativo{
+    opacity:.55;
+    filter:grayscale(.6);
+}
+.inativo .btn{display:none}
+
+footer{
+    text-align:center;
+    padding:35px 20px;
+    color:var(--cinza);
+    font-size:13px;
+}
+</style>
+</head>
+<body>
+
+<header>
+    <h1>Sonhos de Berenice</h1>
+    <p>P I J A M A S  •  L I N G E R I E S  •  S L E E P W E A R</p>
+</header>
+
+<div class="busca">
+    <input id="searchInput" placeholder="Pesquisar pijamas, modelos, tamanhos...">
+    <button onclick="searchProducts()"><i class="fa fa-search"></i></button>
+</div>
+
+<div class="categorias">
+    <span>Nosso catálogo</span>
+</div>
+
+<div class="catalogo" id="catalogo">
+    <!-- Produtos serão carregados via JavaScript -->
+</div>
+
+<script>
+const catalogo = document.getElementById('catalogo');
+const input = document.getElementById('searchInput');
+const backendURL = ''; // vazio porque server.js já serve o client
+
+async function carregarProdutos() {
+    try {
+        const res = await fetch('/produtos'); // rota relativa
+        const produtos = await res.json();
+
+        catalogo.innerHTML = '';
+        produtos.forEach(p => {
+            catalogo.innerHTML += `
+                <div class="card ${p.status === 'inativo' ? 'inativo' : ''}" data-name="${p.nome.toLowerCase()}">
+                    <div class="fav"><i class="fa-regular fa-heart"></i></div>
+                    <img src="${p.imagem}" alt="${p.nome}">
+                    <div class="info">
+                        <h3>${p.nome}</h3>
+                        <div class="tamanho">Tamanhos: ${p.tamanhos.join(' • ')}</div>
+                        <div class="preco">
+                            R$ ${p.preco.toFixed(2)} ${p.preco_antigo ? `<del>${p.preco_antigo.toFixed(2)}</del>` : ''} 
+                            ${p.desconto ? `<span class="desconto">-${p.desconto}%</span>` : ''}
+                        </div>
+                        <div class="status">${p.status === 'ativo' ? '✔ Disponível' : '✖ Indisponível'}</div>
+                        <a class="btn" href="https://wa.me/${p.whatsapp}?text=Quero%20o%20${encodeURIComponent(p.nome)}" target="_blank">
+                            Comprar pelo WhatsApp
+                        </a>
+                    </div>
+                </div>
+            `;
+        });
+    } catch(err){
+        console.error('Erro ao carregar produtos:', err);
+        catalogo.innerHTML = '<p>Não foi possível carregar os produtos.</p>';
+    }
+}
+
+// Carrega produtos na inicialização
+carregarProdutos();
+
+// Busca por produtos
+function searchProducts(){
+    const value = input.value.toLowerCase();
+    document.querySelectorAll('.card').forEach(card => {
+        const name = card.getAttribute('data-name');
+        card.style.display = name.includes(value) ? 'block' : 'none';
+    });
+}
+
+input.addEventListener('keyup', searchProducts);
+</script>
+
+</body>
+</html>
